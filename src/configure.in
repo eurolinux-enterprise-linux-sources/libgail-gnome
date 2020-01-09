@@ -1,0 +1,151 @@
+AC_PREREQ([2.53])
+
+m4_define([gail_gnome_major_version], [1])
+m4_define([gail_gnome_minor_version], [20])
+m4_define([gail_gnome_micro_version], [1])
+m4_define([gail_gnome_interface_age], [3])
+m4_define([gail_gnome_binary_age], [3])
+m4_define([gail_gnome_version],
+          [gail_gnome_major_version.gail_gnome_minor_version.gail_gnome_micro_version])
+
+# libtool version related macros
+m4_define([gail_gnome_lt_release], [gail_gnome_major_version.gail_gnome_minor_version])
+
+# GLib defines lt_current this way
+# m4_define([gail_gnome_lt_current],
+#          [m4_eval(100 * gail_gnome_minor_version + gail_gnome_micro_version - gail_gnome_interface_age)])
+# but libgail-gnome previously used the expression below:
+m4_define([gail_gnome_lt_current],
+          [m4_eval(gail_gnome_micro_version - gail_gnome_interface_age)])
+
+m4_define([gail_gnome_lt_revision], [gail_gnome_interface_age])
+m4_define([gail_gnome_lt_age], [m4_eval(gail_gnome_binary_age - gail_gnome_interface_age)])
+m4_define([gail_gnome_lt_current_minus_age],
+          [m4_eval(gail_gnome_lt_current - gail_gnome_lt_age)])
+
+AC_INIT([Gail GNOME],[gail_gnome_version],[http://bugzilla.gnome.org/enter_bug.cgi?product=atk&component=gail],[libgail-gnome])
+
+AM_INIT_AUTOMAKE([1.9 foreign dist-bzip2 no-dist-gzip])
+
+AM_MAINTAINER_MODE
+
+AC_CONFIG_SRCDIR([gail-gnome])
+AC_CONFIG_HEADERS([config.h])
+
+GAIL_GNOME_MAJOR_VERSION=gail_gnome_major_version
+GAIL_GNOME_MINOR_VERSION=gail_gnome_minor_version
+GAIL_GNOME_MICRO_VERSION=gail_gnome_micro_version
+GAIL_GNOME_INTERFACE_AGE=gail_gnome_interface_age
+GAIL_GNOME_BINARY_AGE=gail_gnome_binary_age
+GAIL_GNOME_VERSION=gail_gnome_version
+AC_SUBST([GAIL_GNOME_MAJOR_VERSION])
+AC_SUBST([GAIL_GNOME_MINOR_VERSION])
+AC_SUBST([GAIL_GNOME_MICRO_VERSION])
+AC_SUBST([GAIL_GNOME_VERSION])
+
+# libtool versioning
+LT_RELEASE=gail_gnome_lt_release
+LT_CURRENT=gail_gnome_lt_current
+LT_REVISION=gail_gnome_lt_revision
+LT_AGE=gail_gnome_lt_age
+LT_CURRENT_MINUS_AGE=gail_gnome_lt_current_minus_age
+AC_SUBST([LT_RELEASE])
+AC_SUBST([LT_CURRENT])
+AC_SUBST([LT_REVISION])
+AC_SUBST([LT_AGE])
+AC_SUBST([LT_CURRENT_MINUS_AGE])
+
+AC_PROG_CC
+AM_DISABLE_STATIC
+
+AC_LIBTOOL_WIN32_DLL
+AC_PROG_LIBTOOL
+
+AC_MSG_CHECKING([for Win32])
+case "$host" in
+  *-*-mingw*)
+    gail_native_win32=yes
+    ;;
+  *)
+    gail_native_win32=no
+    ;;
+esac
+AC_MSG_RESULT([$gail_native_win32])
+AM_CONDITIONAL([OS_WIN32],[test "$gail_native_win32" = "yes"])
+
+if test "$gail_native_win32" = "yes"; then
+  AC_CHECK_PROG([ms_librarian],[lib.exe],[yes],[no])
+fi
+AM_CONDITIONAL([MS_LIB_AVAILABLE],[test "$ms_librarian" = "yes"])
+
+GNOME_COMMON_INIT
+GNOME_DEBUG_CHECK
+GNOME_COMPILE_WARNINGS([maximum])
+
+if test "$enable_debug" = "yes"; then
+  GAIL_GNOME_DEBUG_CFLAGS="-DG_ENABLE_DEBUG"
+else
+  GAIL_GNOME_DEBUG_CFLAGS=""
+fi
+AC_SUBST([GAIL_GNOME_DEBUG_CFLAGS])
+
+# FIXME: is this still needed?
+# Cache $ACLOCAL_FLAGS
+AC_CACHE_CHECK([for aclocal flags], ac_cv_atk_aclocal_flags,[
+   ac_cv_atk_aclocal_flags="$ACLOCAL_FLAGS"
+])
+ACLOCAL="$ACLOCAL $ac_cv_atk_aclocal_flags"
+
+ATK_PACKAGES="atk"
+GTK_PACKAGES="gtk+-2.0"
+LIBBONOBO_PACKAGES="libbonobo-2.0"
+LIBBONOBOUI_PACKAGES="libbonoboui-2.0"
+LIBGNOMEUI_PACKAGES="libgnomeui-2.0"
+PANEL_APPLET_PACKAGES="libpanelapplet-2.0"
+AT_SPI_PACKAGES="libspi-1.0"
+CSPI_PACKAGES="cspi-1.0"
+ATK_REQUIRED_VERSION=1.7.2
+GTK_REQUIRED_VERSION=1.3.11
+LIBBONOBO_REQUIRED_VERSION=1.1.0
+LIBBONOBOUI_REQUIRED_VERSION=1.1.0
+LIBGNOMEUI_REQUIRED_VERSION=1.1.0
+PANEL_APPLET_REQUIRED_VERSION=0.0.18
+AT_SPI_REQUIRED_VERSION=0.10.0
+CSPI_REQUIRED_VERSION=0.10.0
+
+PKG_CHECK_MODULES([DEPS],[
+	$ATK_PACKAGES >= $ATK_REQUIRED_VERSION
+	$GTK_PACKAGES >= $GTK_REQUIRED_VERSION
+	$LIBBONOBO_PACKAGES >= $LIBBONOBO_REQUIRED_VERSION
+	$LIBBONOBOUI_PACKAGES >= $LIBBONOBO_REQUIRED_VERSION
+	$LIBGNOMEUI_PACKAGES >= $LIBGNOMEUI_REQUIRED_VERSION
+	$AT_SPI_PACKAGES >= $AT_SPI_REQUIRED_VERSION
+	$PANEL_APPLET_PACKAGES >= $PANEL_APPLET_REQUIRED_VERSION])
+
+PKG_CHECK_MODULES([TEST],[
+	$ATK_PACKAGES >= $ATK_REQUIRED_VERSION
+	$GTK_PACKAGES >= $GTK_REQUIRED_VERSION
+	$LIBBONOBO_PACKAGES >= $LIBBONOBO_REQUIRED_VERSION
+	$LIBBONOBOUI_PACKAGES >= $LIBBONOBO_REQUIRED_VERSION
+	$LIBGNOMEUI_PACKAGES >= $LIBGNOMEUI_REQUIRED_VERSION
+	$AT_SPI_PACKAGES >= $AT_SPI_REQUIRED_VERSION
+	$CSPI_PACKAGES >= $CSPI_REQUIRED_VERSION
+	$PANEL_APPLET_PACKAGES >= $PANEL_APPLET_REQUIRED_VERSION])
+
+AC_SUBST([DEPS_CFLAGS])
+AC_SUBST([DEPS_LIBS])
+AC_SUBST([TEST_CFLAGS])
+AC_SUBST([TEST_LIBS])
+
+AC_SUBST([AM_CPPFLAGS])
+AC_SUBST([AM_CFLAGS])
+AC_SUBST([AM_LDFLAGS])
+
+AC_CONFIG_FILES([
+Makefile
+libgail-gnome.pc
+gail-gnome/Makefile
+test/Makefile
+])
+
+AC_OUTPUT
